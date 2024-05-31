@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Http;
+using Data.Contexts;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Functions.Worker;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
-using Data.Contexts;
+using Microsoft.Azure.Functions.Worker;
 
 namespace UserProvider.Functions
 {
@@ -19,37 +19,39 @@ namespace UserProvider.Functions
         }
 
         [Function("GetUsers")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
+        public async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req)
         {
-            _logger.LogInformation("C# HTTP trigger function processed a request.");
+            _logger.LogInformation("C# HTTP trigger function processed a request to get all users.");
 
-            var users = await _context.Users
-                .Include(u => u.Address)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.UserName,
-                    u.Email,
-                    u.FirstName,
-                    u.LastName,
-                    u.Biography,
-                    u.ProfileImg,
-                    u.AddressId,
-                    u.IsSubscribed,
-                    u.IsDarkTheme,
-                    u.NotificationEmail,
-                    Address = new
-                    {
-                        u.Address.Id,
-                        u.Address.AddressLine_1,
-                        u.Address.AddressLine_2,
-                        u.Address.PostalCode,
-                        u.Address.City
-                    }
-                })
-                .ToListAsync();
+            try
+            {
+                var users = await _context.Users
+                                          .Include(u => u.Address)
+                                          .Select(u => new
+                                          {
+                                              u.Id,
+                                              u.UserName,
+                                              u.Email,
+                                              u.FirstName,
+                                              u.LastName,
+                                              u.Biography,
+                                              u.ProfileImg,
+                                              u.AddressId,
+                                              u.Address,
+                                              u.IsSubscribed,
+                                              u.IsDarkTheme,
+                                              u.NotificationEmail
+                                          })
+                                          .ToListAsync();
 
-            return new OkObjectResult(users);
+                return new OkObjectResult(users);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error retrieving users: {ex.Message}");
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }
