@@ -8,10 +8,6 @@ namespace Data.Contexts
     {
         public DbSet<AddressEntity> Addresses { get; set; }
 
-        public DbSet<SubsribeEntity> Subscribers { get; set; }
-
-
-
     }
 }
 
