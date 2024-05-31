@@ -27,7 +27,32 @@ namespace UserProvider.Functions
 
             try
             {
-                var user = await _context.Users.Include(u => u.Address).FirstOrDefaultAsync(u => u.Id == id);
+                var user = await _context.Users
+                                         .Include(u => u.Address)
+                                         .Where(u => u.Id == id)
+                                         .Select(u => new
+                                         {
+                                             u.Id,
+                                             u.UserName,
+                                             u.Email,
+                                             u.FirstName,
+                                             u.LastName,
+                                             u.Biography,
+                                             u.ProfileImg,
+                                             u.AddressId,
+                                             Address = u.Address == null ? null : new
+                                             {
+                                                 u.Address.Id,
+                                                 u.Address.AddressLine_1,
+                                                 u.Address.AddressLine_2,
+                                                 u.Address.PostalCode,
+                                                 u.Address.City
+                                             },
+                                             u.IsSubscribed,
+                                             u.IsDarkTheme,
+                                             u.NotificationEmail
+                                         })
+                                         .FirstOrDefaultAsync();
 
                 if (user == null)
                 {
